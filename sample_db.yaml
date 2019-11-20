@@ -1,0 +1,56 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: sample-db
+  labels:
+    app: mysql-server
+spec:
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mysql-server
+    spec:
+      containers:
+        - name: sample-mysql
+          image: mysql:5.7.25
+          volumeMounts:
+            - name: sample-mysql-config
+              mountPath: /etc/mysql/conf.d
+              readOnly: true
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: root
+            - name: MYSQL_USER
+              value: sample
+            - name: MYSQL_PASSWORD
+              value: sample
+            - name: MYSQL_DATABASE
+              value: sample_local
+          ports:
+            - containerPort: 3306
+          args:
+            - --character-set-server=utf8
+            - --collation-server=utf8_unicode_ci
+      volumes:
+        - name: sample-mysql-config
+          configMap:
+            name: sample-mysql-config
+            items:
+              - key: sample.cnf
+                path: sample.cnf
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+  labels:
+    app: mysql
+spec:
+  ports:
+  - port: 3306
+    targetPort: 3306
+  selector:
+    app: mysql-server
+
